@@ -858,6 +858,14 @@ extension Ghostty {
         }
 
         override func mouseDown(with event: NSEvent) {
+            // Clear any stale suppress flag. This can happen when a prior
+            // focus-only click was consumed by the local event monitor
+            // (returning nil) and AppKit never delivered a matching mouseUp
+            // to clear the flag. Without this, the next legitimate mouseUp
+            // would be incorrectly suppressed, leaving the core thinking
+            // the button is still held (causing sticky selection in splits).
+            suppressNextLeftMouseUp = false
+
             guard let surface = self.surface else { return }
             let mods = Ghostty.ghosttyMods(event.modifierFlags)
             ghostty_surface_mouse_button(surface, GHOSTTY_MOUSE_PRESS, GHOSTTY_MOUSE_LEFT, mods)
